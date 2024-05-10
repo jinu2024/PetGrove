@@ -19,27 +19,36 @@ const SignUp = () => {
     e.preventDefault();
     const config = { headers: { "Content-Type": "multipart/form-data" } }
     const newForm = new FormData();
-
+  
     newForm.append("file", avatar);
     newForm.append("name", name);
     newForm.append("email", email);
     newForm.append("password", password);
-    axios.
-    post(`${server}/user/create-user`, newForm, config)
-    .then((res) => {
+  
+    try {
+      const res = await axios.post(`${server}/user/create-user`, newForm, config);
       toast.success(res.data.message);
+      
+      // Clear form fields and reset avatar state after successful submission
       setName("");
       setEmail("");
       setPassword("");
-      setAvatar();
-
-    })
-    .catch((error)=>{
-      toast.error(error.response.data.message);
-    });
+      setAvatar(null); // Set avatar state to null to clear it
   
-  
+      // Redirect the user to the login page after successful signup
+      navigate("/login");
+    } catch (error) {
+      // Handle errors gracefully
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else if (error.request) {
+        toast.error("Network Error. Please try again later.");
+      } else {
+        toast.error("An error occurred. Please try again later.");
+      }
+    }
   };
+  
 
   const handleInputFileChange = (e) => {
 

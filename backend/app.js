@@ -5,11 +5,12 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser")
 const user = require("./controller/user")
 const cors = require("cors");
+const shop = require("./controller/shop");
 
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: 'http://localhost:3000',
     credentials: true,
 }));
 app.use("/", express.static("uploads"));
@@ -24,6 +25,7 @@ if(process.env.NODE_ENV !== "PRODUCTION"){
 
 //import routes
 app.use("/api/v1/user", user);
+app.use("/api/v1/shop", shop);
 
 //ErrorHandling
 app.use(ErrorHandler);

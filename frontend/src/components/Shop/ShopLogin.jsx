@@ -1,62 +1,63 @@
 import React, { useEffect, useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import styles from "../styles/styles";
+import styles from "../../styles/styles";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { server } from "../server";
+import { server } from "../../server";
 import { toast } from "react-toastify";
 import { useRecoilState } from "recoil";
-import { loadingState, userState } from "../recoil/atoms/user";
+import { loadingState } from "../../recoil/atoms/user";
+import { sellerState } from "../../recoil/atoms/seller";
 
-const Login = () => {
+const ShopLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
-  const [user, setUser] = useRecoilState(userState);
   const [loading, setLoading] = useRecoilState(loadingState);
+  const [seller, setSeller] = useRecoilState(sellerState);
   const navigate = useNavigate();
 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
       setLoading(true); // Set loading state to true when starting the login process
-
+  
       const res = await axios.post(
-        `${server}/user/login-user`,
+        `${server}/shop/shop-login`,
         { email, password },
         { withCredentials: true }
       );
-
+  
       toast.success("Login Success!");
 
-      // Update Recoil state after successful login
-      setUser({
+
+    // Update Recoil state after successful login
+       setSeller({
         isAuthenticated: true,
-        name: res.data.user.name,
-        email: res.data.user.email,
-        avatar: res.data.user.avatar,
+        name: res.data.seller.name,
+        email: res.data.seller.email,
+        avatar: res.data.seller.avatar,
       });
 
-      
-
-      // Navigate to the home page
+  
+    // Navigate to the home page after successful login
       navigate("/");
+  
     } catch (err) {
-      toast.error(err.response.data.message);
+      toast.error(err?.response?.data?.message);
     } finally {
       setLoading(false); // Set loading state to false when login process finishes
     }
   };
-  console.log("User authenticated:", user.isAuthenticated);
 
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Login to your account
+          Login to your Shop
         </h2>
       </div>
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -152,7 +153,7 @@ const Login = () => {
             </div>
             <div className={`${styles.normalFlex} w-full justify-center`}>
               <h4>Don't have an account?</h4>
-              <Link to="/signup" className="text-blue-600 pl-2">
+              <Link to="/shop-create" className="text-blue-600 pl-2">
                 SignUp
               </Link>
             </div>
@@ -163,4 +164,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ShopLogin;

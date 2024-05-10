@@ -24,3 +24,4 @@ yarn-error.log*
 
 # ignore config folder in the backend
 /backend/config
+

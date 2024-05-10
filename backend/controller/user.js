@@ -11,6 +11,7 @@ const sendMail = require("../utils/sendMailer");
 const sendToken = require("../utils/jwtToken");
 const {isAuthenticated}  = require("../middleware/auth");
 
+
 router.post("/create-user", upload.single("file"), async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
@@ -39,7 +40,8 @@ router.post("/create-user", upload.single("file"), async (req, res, next) => {
     };
 
     const activationToken = createActivationToken(user);
-    const activationUrl = `http://localhost:3000/activation/${activationToken}`;
+    const activationUrl = `${process.env.SERVER}/activation/${activationToken}`;
+
 
     // Send activation email
     await sendMail({
@@ -134,5 +136,27 @@ router.get("/getuser", isAuthenticated, catchAsyncErrors(async(req,res,next)=>{
     return next(new ErrorHandler(error.message, 500));
   }
 }));
+
+// LogOut User
+
+router.get(
+  "/logout",
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      res.cookie("token", null, {
+        expires: new Date(Date.now()),
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      });
+      res.status(201).json({
+        success: true,
+        message: "Log out successful!",
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
 
 module.exports = router;

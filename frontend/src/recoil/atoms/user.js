@@ -5,8 +5,10 @@ export const userState = atom({
     default: {
         isAuthenticated: false,
         avatar: null,
+        name: '',
     },
 });
+
 
 export const loadingState = atom({
     key: 'loadingState',
