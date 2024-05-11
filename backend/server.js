@@ -9,11 +9,7 @@ process.on("uncaughtException", (err)=>{
 //config
 if(process.env.NODE_ENV !== "PRODUCTION"){
     require("dotenv").config({
-<<<<<<< HEAD
-        path: "./config/.env"
-=======
         path: ".env"
->>>>>>> b85f960ae42bfebfe94f889d52e3ab4ac2bb99d6
     })
 }
 
@@ -24,7 +20,7 @@ connectDatabase();
 //create server
 
 const server = app.listen(process.env.PORT, ()=>{
-    console.log(`Server is running on http://localhost:${process.env.PORT}`)
+    console.log(`Server is running on port: ${process.env.PORT}`)
 })
 
 //unhandled promise detection

@@ -7,21 +7,20 @@ const user = require("./controller/user")
 const cors = require("cors");
 const shop = require("./controller/shop");
 
+if(process.env.NODE_ENV !== "PRODUCTION"){
+    require("dotenv").config({
+        path: ".env"
+    })
+}
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: process.env.FRONTEND,
     credentials: true,
 }));
 app.use("/", express.static("uploads"));
 app.use(bodyParser.urlencoded({extended: true}));
 
-
-if(process.env.NODE_ENV !== "PRODUCTION"){
-    require("dotenv").config({
-    path:"backend/config/.env"
-});
-}
 
 //import routes
 app.use("/api/v1/user", user);
