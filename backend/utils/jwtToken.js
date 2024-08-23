@@ -6,7 +6,7 @@ const sendToken = (user, statusCode, res) => {
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         httpOnly: true,
         secure: true, // Send only over HTTPS
-        sameSite: 'strict', // Restrict to same-site requests
+        sameSite: 'None',
     };
 
     res.status(statusCode)

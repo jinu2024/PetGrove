@@ -17,16 +17,25 @@ exports.isAuthenticated = catchAsyncErrors(async (req, res, next) => {
   next();
 });
 
-exports.isSeller = catchAsyncErrors(async(req,res,next) => {
-  const {seller_token} = req.cookies;
-  if(!seller_token){
-      return next(new ErrorHandler("Please login to continue", 401));
+exports.isSeller = catchAsyncErrors(async (req, res, next) => {
+  const { seller_token } = req.cookies;
+
+  if (!seller_token) {
+    return next(new ErrorHandler('Please login to continue', 401));
   }
 
-  const decoded = jwt.verify(seller_token, process.env.JWT_SECRET_KEY);
+  try {
+    const decoded = jwt.verify(seller_token, process.env.JWT_SECRET_KEY);
+    const seller = await Shop.findById(decoded.id);
 
-  req.seller = await Shop.findById(decoded.id);
+    if (!seller) {
+      return next(new ErrorHandler('Seller not found', 401));
+    }
 
-  next();
+    req.seller = seller;
+    next();
+  } catch (error) {
+    return next(new ErrorHandler('Invalid token', 401));
+  }
 });
 

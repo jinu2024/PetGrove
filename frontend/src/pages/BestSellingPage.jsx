@@ -4,12 +4,15 @@ import styles from '../styles/styles'
 import { useSearchParams } from 'react-router-dom'
 import { productData } from '../static/data'
 import ProductCard from '../components/Home/ProductCard/ProductCard'
+import { useRecoilValue } from 'recoil'
+import { allProductsState } from '../recoil/atoms/allProducts'
 const BestSellingPage = () => {
 
     const [data, setData] = useState([]);
+    const allProducts = useRecoilValue(allProductsState);
 
     useEffect(()=>{
-        const d = productData && productData.sort((a,b)=> b.total_sell- a.total_sell);
+        const d = allProducts && allProducts.slice().sort((a,b)=> b.sold_out- a.sold_out);
         setData(d);
     }, []);
   return (

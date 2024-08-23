@@ -1,213 +1,176 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import styles from '../../styles/styles';
 import { AiFillHeart, AiOutlineHeart, AiOutlineMessage, AiOutlineShoppingCart } from 'react-icons/ai';
+import styles from '../../styles/styles';
+import { backend_url } from '../../server';
+import { useRecoilValue } from 'recoil';
+import { sellerState } from '../../recoil/atoms/seller';
+import Loader from '../Layout/Loader';
+import useGetProducts from '../../hooks/getProducts';
+import { useCart } from '../../hooks/cart';
+import useWishlist from '../../hooks/wishlist';
+import { toast } from 'react-toastify';
 
 const ProductDetails = ({ data }) => {
     const [count, setCount] = useState(1);
-    const [click, setClick] = useState(false);
+    const [click, setClick] = useState(false); // For wishlist
     const [select, setSelect] = useState(0);
+
     const navigate = useNavigate();
+    const { addToCart } = useCart(); 
+    const { wishlist, addToWishlist, removeFromWishlist } = useWishlist(); 
 
+    // Check if item is already in wishlist
+    const isInWishlist = wishlist.some((item) => item._id === data._id);
+    
+    const incrementCount = () => setCount(count + 1);
+    const decrementCount = () => count > 1 && setCount(count - 1);
 
-    const incrementCount = () => {
-        setCount(count + 1);
-    }
-    const decrementCount = () => {
-        if (count > 1) {
-            setCount(count - 1);
+    const handleMessageSubmit = () => navigate("/inbox?conversation507sabkbcjeo76");
+
+    const addToCartHandler = () => {
+        if (data.stock < count) {
+            toast.error('Product stock is limited!');
+        } else {
+            const productWithQuantity = { ...data, quantity: count };
+            addToCart(productWithQuantity);
         }
-    }
-    const handleMessageSubmit = () => {
-        navigate("/inbox?conversation507sabkbcjeo76")
-    }
+    };
+
+    const toggleWishlist = () => {
+        if (isInWishlist) {
+            removeFromWishlist(data._id);
+        } else {
+            addToWishlist(data);
+        }
+        setClick(!click);
+    };
 
     return (
         <div className='bg-white'>
-            {
-                data ? (
-                    <div className={`${styles.section} w-[90%] 800px:w-[80%]`}>
-                        <div className="w-full py-5">
-                            <div className="block w-full 800px:flex">
-                                <div className="w-full 800px:w-[50%]">
-                                    <img src={data.image_Url[select].url} alt="" className='w-[80%]' />
-                                    <div className="w-full flex">
-                                        <div className={`${select === 0 ? "border" : "null"} cursor-pointer`}>
-                                            <img src={data?.image_Url[0].url} alt="" className='h-[200px]' onClick={() => setSelect(0)} />
-
+            {data ? (
+                <div className={`${styles.section} w-[90%] 800px:w-[80%]`}>
+                    <div className="w-full py-5">
+                        <div className="block w-full 800px:flex">
+                            <div className="w-full 800px:w-[50%] flex flex-col item-center">
+                                <img src={`${backend_url}/${data.images[select]}`} alt="" className='w-[80%]' />
+                                <div className="w-full flex p-10">
+                                    {data.images.map((image, index) => (
+                                        <div key={index} className={`${select === index ? "border-2 border-blue-950" : ""} cursor-pointer px-2`}>
+                                            <img
+                                                src={`${backend_url}/${image}`} 
+                                                alt=""
+                                                className=' h-[60px] 800px:h-[130px] mr-3 mt-3'
+                                                onClick={() => setSelect(index)}
+                                            />
                                         </div>
-                                        <div className={`${select === 1 ? "border" : "null"} cursor-pointer`}>
-                                            <img src={data?.image_Url[1].url} alt="" className='h-[200px]' onClick={() => setSelect(1)} />
-
-                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="w-full 800px:w-[50%] pt-5">
+                                <h1 className={`${styles.productTitle}`}>{data.name}</h1>
+                                <p>{data.description}</p>
+                                <div className="flex pt-3">
+                                    <h4 className={`${styles.productDiscountPrice}`}>{data.discountPrice}$</h4>
+                                    {data.originalPrice && <h3 className={`${styles.price}`}>{data.originalPrice}$</h3>}
+                                </div>
+                                <div className="flex items-center mt-12 justify-between pr-3">
+                                    <div>
+                                        <button className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out" onClick={decrementCount}>-</button>
+                                        <span className="bg-gray-200 text-gray-800 font-medium px-4 py-[10px]">{count}</span>
+                                        <button className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out" onClick={incrementCount}>+</button>
+                                    </div>
+                                    <div>
+                                        {isInWishlist ? (
+                                            <AiFillHeart size={22} className='cursor-pointer' onClick={toggleWishlist} color="red" title='Remove from wishlist' />
+                                        ) : (
+                                            <AiOutlineHeart size={22} className='cursor-pointer' onClick={toggleWishlist} color="#333" title='Add to wishlist' />
+                                        )}
                                     </div>
                                 </div>
-                                <div className="w-full 800px:w-[50%] pt-5">
-                                    <h1 className={`${styles.productTitle}`}>
-                                        {data.name}
-                                    </h1>
-                                    <p>{data.description}</p>
-                                    <div className="flex pt-3">
-                                        <h4 className={`${styles.productDiscountPrice}`}>
-                                            {data.discount_price}$
-                                        </h4>
-                                        <h3 className={`${styles.price}`}>
-                                            {data.price ? data.price + "$" : null}
-                                        </h3>
+                                <div className={`${styles.button} mt-6 !rounded h-11 flex items-center`} onClick={addToCartHandler}>
+                                    <span className='text-white flex items-center'>Add to cart <AiOutlineShoppingCart className='ml-1' /></span>
+                                </div>
+                                <div className="flex items-center pt-8">
+                                    <img src={`${backend_url}/${data.shop.avatar}`} alt="" className='w-[50px] h-[50px] rounded-full mr-2' />
+                                    <div className='pr-8'>
+                                        <h3 className={`${styles.shop_name} pb-1 pt-1}`}>{data.shop.name}</h3>
+                                        <h5 className='pb-3 text-[15px]'>({data.shop.ratings}) Ratings</h5>
                                     </div>
-                                    <div className="flex items-center mt-12 justify-between pr-3">
-                                        <div>
-                                            <button className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-l px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out" onClick={decrementCount}>
-                                                -
-                                            </button>
-                                            <span className="bg-gray-200 text-gray-800 font-medium px-4 py-[10px]">
-                                                {count}
-                                            </span>
-                                            <button className="bg-gradient-to-r from-teal-400 to-teal-500 text-white font-bold rounded-r px-4 py-2 shadow-lg hover:opacity-75 transition duration-300 ease-in-out" onClick={incrementCount}>
-                                                +
-                                            </button>
-                                        </div>
-                                        <div>
-                                            {
-                                                click ? (
-                                                    <AiFillHeart size={22} className='cursor-pointer'
-                                                        onClick={() => setClick(!click)} color={click ? "red" : "#333"}
-                                                        title='Remove from wishlist' />
-                                                ) : (
-                                                    <AiOutlineHeart size={22} className='cursor-pointer'
-                                                        onClick={() => setClick(!click)} color={click ? "red" : "#333"} title='Add to wishlist' />
-                                                )
-                                            }
-                                        </div>
-
-                                    </div>
-                                    <div className={`${styles.button} mt-6 !rounded h-11 flex items-center`}>
-                                        <span className='text-white flex items-center'>
-                                            Add to cart <AiOutlineShoppingCart className='ml-1' />
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center pt-8">
-                                        <img src={data.shop.shop_avatar.url} alt="" className='w-[50px] h-[50px] rounded-full mr-2'/>
-                                        <div className='pr-8'>
-                                            <h3 className={`{${styles.shop_name} pb-1 pt-1}`}>
-                                                {data.shop.name}
-                                            </h3>
-                                            <h5 className='pb-3 text-[15px]'>
-                                                ({data.shop.ratings}) Ratings
-                                            </h5>
-                                        </div>
-                                        <div className={`${styles.button} bg-[#2e07ad] mt-4 !rounded !h-11`} onClick={handleMessageSubmit}>
-                                            <span className='text-white flex items-center'>
-                                                Send Message <AiOutlineMessage className='ml-1'/>
-                                            </span>
-                                        </div>
+                                    <div className={`${styles.button} bg-[#2e07ad] mt-4 !rounded !h-11`} onClick={handleMessageSubmit}>
+                                        <span className='text-white flex items-center'>Send Message <AiOutlineMessage className='ml-1' /></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <ProductDetailsInfo data = {data}/>
-                        <br />
-                        <br />
                     </div>
-                ) : null
-            }
+                    <ProductDetailsInfo data={data} />
+                    <br />
+                    <br />
+                </div>
+            ) : <div><Loader/></div>}
         </div>
     );
 };
 
-const ProductDetailsInfo = ({data}) => {
+const ProductDetailsInfo = ({ data }) => {
     const [active, setActive] = useState(1);
-    return(
+    const {_id} = useRecoilValue(sellerState);
+    const {products} = useGetProducts(_id);
+    return (
         <div className='bg-[#f5f6fb] px-3 800px:px-10 py-2 rounded'>
             <div className="w-full flex justify-between border-b pt-10 pb-2">
                 <div className="relative">
-                    <h5 className='text-[#000] text-[10px] px-1 leading-5 font-[600] cursor-pointer 800px:text-[20px]' onClick={()=> setActive(1)}>
-                        Product Details
-                    </h5>
-                    {
-                        active === 1 ? (
-                            <div className={`${styles.active_indicator}`}></div>
-                        ): null
-                    }
+                    <h5 className='text-[#000] text-[13px] px-1 leading-5 font-[600] cursor-pointer 800px:text-[20px]' onClick={() => setActive(1)}>Product Details</h5>
+                    {active === 1 && <div className={`${styles.active_indicator}`}></div>}
                 </div>
                 <div className="relative">
-                    <h5 className='text-[#000] text-[10px] px-1 leading-5 font-[600] cursor-pointer 800px:text-[20px]' onClick={()=> setActive(2)}>
-                        Product Reviews
-                    </h5>
-                    {
-                        active === 2 ? (
-                            <div className={`${styles.active_indicator}`}></div>
-                        ): null
-                    }
+                    <h5 className='text-[#000] text-[13px] px-1 leading-5 font-[600] cursor-pointer 800px:text-[20px]' onClick={() => setActive(2)}>Product Reviews</h5>
+                    {active === 2 && <div className={`${styles.active_indicator}`}></div>}
                 </div>
                 <div className="relative">
-                    <h5 className='text-[#000] text-[10px] px-1 leading-5 font-[600] cursor-pointer 800px:text-[20px]' onClick={()=> setActive(3)}>
-                        Seller Information
-                    </h5>
-                    {
-                        active === 3 ? (
-                            <div className={`${styles.active_indicator}`}></div>
-                        ): null
-                    }
+                    <h5 className='text-[#000] text-[13px] px-1 leading-5 font-[600] cursor-pointer 800px:text-[20px]' onClick={() => setActive(3)}>Seller Information</h5>
+                    {active === 3 && <div className={`${styles.active_indicator}`}></div>}
                 </div>
             </div>
-                    {
-                        active === 1 ? (
-                            <>
-                            <p className='py-2 text-[18px] leading-8 pb-10 whitespace-pre-line'>
-                                Product details are a crucial part of any eCommerce website or online marketplace. These details help the potential customers to make an informed decision about the product they are interested in buying. A well-written product description can also be a powerful marketing tool that can help to increase sales.Product details typically include information about the product's features, specifications, dimensions, weight, materials, and other relevant information that can help customers to understand the product better. The product details section should also include high-quality images and videos of the product, as well as customer reviews and ratings.</p>
-                                <p  className='py-2 text-[18px] leading-8 pb-10 whitespace-pre-line'>
-                                    In addition to the technical specifications and visual content, the product details section can also incorporate key selling points and unique selling propositions (USPs) of the product. This can include highlighting any special features, benefits, or advantages that set the product apart from competitors. Furthermore, including information about warranties, return policies, and customer support options can instill confidence in potential buyers and alleviate any concerns they may have about purchasing the product online. By providing comprehensive and compelling product details, businesses can enhance the overall shopping experience for customers and increase the likelihood of conversion.</p>
-                                <p  className='py-2 text-[18px] leading-8 pb-10 whitespace-pre-line'>
-                                    In addition to the technical specifications and visual content, the product details section can also incorporate key selling points and unique selling propositions (USPs) of the product. This can include highlighting any special features, benefits, or advantages that set the product apart from competitors. Furthermore, including information about warranties, return policies, and customer support options can instill confidence in potential buyers and alleviate any concerns they may have about purchasing the product online. By providing comprehensive and compelling product details, businesses can enhance the overall shopping experience for customers and increase the likelihood of conversion.</p>
-                            </>
-                        ): null
-                    }
-                    {
-                        active === 2 ? (
-                            <div className='w-full justify-center min-h-[40vh] flex items-center'>
-                                <p>No Reviews yet!</p>
+            {active === 1 && (
+                <>
+                    <p className=' text-[12px] py-2 800px:text-[18px] leading-8 pb-10 whitespace-pre-line'>{data.description}</p>
+                </>
+            )}
+            {active === 2 && (
+                <div className='w-full justify-center min-h-[40vh] flex items-center'>
+                    <p>No Reviews yet!</p>
+                </div>
+            )}
+            {active === 3 && (
+                <div className='w-full block 800px:flex p-5'>
+                    <div className='w-full 800px:w-[50%]'>
+                        <div className='flex items-center'>
+                            <img src={`${backend_url}/${data.shop.avatar}`} alt="" className='w-[50px] h-[50px] rounded-full' />
+                            <div className='pl-3'>
+                                <h3 className={`${styles.shop_name}`}>{data.shop.name}</h3>
+                                <h5 className='pb-2  text-[12px] 800px:text-[15px]'>({data.shop.ratings}) Ratings</h5>
                             </div>
-                        ) : null
-                    }
-                    {
-                        active === 3 && (
-                            <div className='w-full block 800px:flex p-5'>
-                                <div className='w-full 800px:w-[50%]'>
-                                    <div className='flex items-center'>
-                                    <img src={data.shop.shop_avatar.url} alt="" className='w-[50px] h-[50px] rounded-full' />
-                                    <div className='pl-3'>
-                                            <h3 className={`${styles.shop_name}`}>{data.shop.name}</h3>
-                                            <h5 className='pb-2 text-[15px]'>
-                                                ({data.shop.ratings}) Ratings
-                                            </h5>
-                                        </div>
-                                    </div>
-                                            <p className="pt-2">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Voluptatibus maiores magnam reiciendis! Tempore, velit nostrum minima molestias consequuntur a facilis error eligendi sapiente delectus maxime explicabo ut autem eius in!</p>            
+                        </div>
+                        <p className="pt-2 text-[12px] 800px:text-[15px]">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Voluptatibus maiores magnam reiciendis! Tempore, velit nostrum minima molestias consequuntur a facilis error eligendi sapiente delectus maxime explicabo ut autem eius in!</p>
+                    </div>
+                    <div className="w-full 800px:w-[50%] mt-5 800px:mt-0 800px:flex flex-col items-end">
+                        <div className="text-left">
+                            <h5 className="font-[600] text-[12px] 800px:text-[15px]">Joined on: <span className='font-[500]'>{data.shop?.createdAt?.slice(0,10)}</span></h5>
+                            <h5 className="font-[600] pt-3 text-[12px] 800px:text-[15px]">Total Products: <span className='font-[500]'>{products.length}</span></h5>
+                            <h5 className="font-[600] pt-3 text-[12px] 800px:text-[15px]">Total Reviews: <span className='font-[500]'>50</span></h5>
+                            <Link to={`/shop/preview/${data.shopId}`}>
+                                <div className={`${styles.button} !rounded-[4px] !h-[39.5px] mt-3`}>
+                                    <h4 className='text-white'>Visit Shop</h4>
                                 </div>
-                                <div className="w-full 800px:w-[50%] mt-5 800px:mt-0 800px:flex flex-col items-end">
-                                    <div className="text-left">
-                                        <h5 className="font-[600]">
-                                            Joined on: <span className='font-[500]'>06 May,2024</span>
-                                        </h5>
-                                        <h5 className="font-[600] pt-3">
-                                            Total Products: <span className='font-[500]'>1,900</span>
-                                        </h5>
-                                        <h5 className="font-[600] pt-3">
-                                            Total Reviews: <span className='font-[500]'>50</span>
-                                        </h5>
-                                        <Link to="/">
-                                        <div className={`${styles.button} !rounded-[4px] !h-[39.5px] mt-3`}>
-                                            <h4 className='text-white'>Visit Shop</h4>
-                                        </div>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    }
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-    )
-}
+    );
+};
 
-export default ProductDetails
+export default ProductDetails;

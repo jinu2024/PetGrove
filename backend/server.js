@@ -3,17 +3,13 @@ const connectDatabase = require("./db/database");
 // handling uncaught exception
 process.on("uncaughtException", (err)=>{
     console.log(`Error: ${err.message}`);
-    console.log("Shitting down the server for handling uncaught exception");
-})
+    console.log("Shutting down the server for handling uncaught exception");
+}) 
 
 //config
 if(process.env.NODE_ENV !== "PRODUCTION"){
     require("dotenv").config({
-<<<<<<< HEAD
         path: "./config/.env"
-=======
-        path: ".env"
->>>>>>> b85f960ae42bfebfe94f889d52e3ab4ac2bb99d6
     })
 }
 

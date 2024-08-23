@@ -1,9 +1,10 @@
-import React from 'react'
-import "./App.css"
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import {BrowserRouter, Routes, Route} from "react-router-dom";
-import {LoginPage,
+import React from "react";
+import "./App.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  LoginPage,
   SignupPage,
   ActivationPage,
   ProductsPage,
@@ -14,72 +15,155 @@ import {LoginPage,
   ProductDetailsPage,
   ProfilePage,
   ShopCreatePage,
-  CheckOutPage,
+  CheckoutPage,
   OrderSuccessPage,
   PaymentPage,
   SellerActivationPage,
-  ShopLoginPage} from "./Routes.js"; 
+  ShopLoginPage,
+} from "./Routes.js";
 
-import { loadingState } from './recoil/atoms/user';
-import {useRecoilValue } from 'recoil';
-import useUserAuth from './hooks/getUser.jsx';
-import useSellerAuth from './hooks/getSeller.jsx';
-import ProtectedRoute from './ProtectedRoute';
-import {ShopHomePage} from './ShopRoutes.js'
-import SellerProtectedRoute from './SellerProtectedRoute';
-
+import useUserAuth from "./hooks/getUser.jsx";
+import useSellerAuth from "./hooks/getSeller.jsx";
+import ProtectedRoute from "./ProtectedRoute";
+import {
+  ShopHomePage,
+  ShopDashboardPage,
+  ShopCreateProduct,
+  ShopAllProducts,
+  ShopCreateEvent,
+  ShopAllEvents,
+  ShopAllCoupons,
+  ShopPreviewPage,
+} from "./ShopRoutes.js";
+import SellerProtectedRoute from "./SellerProtectedRoute";
+import Loader from "./components/Layout/Loader";
+import useGetAllProducts from "./hooks/getAllProducts";
+import useGetAllEvents from "./hooks/getAllEvents";
 
 const App = () => {
-  const loading = useRecoilValue(loadingState);
+  // const loading = useRecoilValue(loadingState);
 
-  const userAuth = useUserAuth();
+  const { user, loading: userLoading } = useUserAuth();
+  const { seller, loading: sellerLoading } = useSellerAuth();
   const sellerAuth = useSellerAuth();
+  const allProducts = useGetAllProducts();
+  const allEvents = useGetAllEvents();
+
+  const loading = userLoading || sellerLoading;
 
   return (
     <>
-    {
-      loading ? (
-        <div>Loading...</div>
-      ):(
+      {loading ? (
+        <div>
+          <Loader />
+        </div>
+      ) : (
         <BrowserRouter>
-    <Routes>
-      <Route path='/' element={<HomePage/>}/>
-      <Route path= "/login" element = {<LoginPage/>}/>
-      <Route path= "/signup" element = {<SignupPage/>}/>
-      <Route path = "/activation/:activation_token" element={<ActivationPage/>}/>
-      <Route path = "/seller/activation/:activation_token" element={<SellerActivationPage/>}/>
-      <Route path='/products' element={<ProductsPage/>}/>
-      <Route path='/product/:name' element={<ProductDetailsPage/>}/>
-      <Route path='/best-selling' element={<BestSellingPage/>}/>
-      <Route path='/events' element={<EventsPage/>}/>
-      <Route path='/faq' element={<FAQPage/>}/>
-      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-      <Route path="/checkout" element={<CheckOutPage/> } />
-      <Route path='/payment' element={<PaymentPage/>}/>
-      <Route path='/order/success/:id' element={<OrderSuccessPage/>}/>
-      {/* Shop Routes */}
-      <Route path='/shop-create' element={<ShopCreatePage/>}/>
-      <Route path='/shop-login' element={<ShopLoginPage/>}/>
-      <Route path='/shop/:id' element={<SellerProtectedRoute><ShopHomePage /></SellerProtectedRoute>}/>
-
-    </Routes>
-    <ToastContainer
-        position="bottom-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
-    </BrowserRouter>
-      )
-    }
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route
+              path="/activation/:activation_token"
+              element={<ActivationPage />}
+            />
+            <Route
+              path="/seller/activation/:activation_token"
+              element={<SellerActivationPage />}
+            />
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/product/:name" element={<ProductDetailsPage />} />
+            <Route path="/best-selling" element={<BestSellingPage />} />
+            <Route path="/events" element={<EventsPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/order/success/:id" element={<OrderSuccessPage />} />
+            <Route path="/shop/preview/:id" element={<ShopPreviewPage />} />
+            {/* Shop Routes */}
+            <Route path="/shop-create" element={<ShopCreatePage />} />
+            <Route path="/shop-login" element={<ShopLoginPage />} />
+            <Route
+              path="/shop/:id"
+              element={
+                <SellerProtectedRoute>
+                  <ShopHomePage />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <SellerProtectedRoute>
+                  <ShopDashboardPage />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard-create-product"
+              element={
+                <SellerProtectedRoute>
+                  <ShopCreateProduct />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard-products"
+              element={
+                <SellerProtectedRoute>
+                  <ShopAllProducts />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard-create-event"
+              element={
+                <SellerProtectedRoute>
+                  <ShopCreateEvent />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard-events"
+              element={
+                <SellerProtectedRoute>
+                  <ShopAllEvents />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard-coupons"
+              element={
+                <SellerProtectedRoute>
+                  <ShopAllCoupons />
+                </SellerProtectedRoute>
+              }
+            />
+          </Routes>
+          <ToastContainer
+            position="bottom-center"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
+          />
+        </BrowserRouter>
+      )}
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;

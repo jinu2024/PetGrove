@@ -39,11 +39,13 @@ const ShopLogin = () => {
         name: res.data.seller.name,
         email: res.data.seller.email,
         avatar: res.data.seller.avatar,
+        _id: res.data.seller._id,
+        address: res.data.seller.address,
       });
 
-  
-    // Navigate to the home page after successful login
-      navigate("/");
+      // Navigate to the dashboard after successful login
+      navigate("/dashboard");
+        window.location.reload(true);
   
     } catch (err) {
       toast.error(err?.response?.data?.message);

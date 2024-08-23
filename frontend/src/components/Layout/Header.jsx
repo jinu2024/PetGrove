@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from '../../styles/styles';
 import { Link } from 'react-router-dom';
 import logo from "../../Assets/isolated-monochrome-black.svg";
-import { categoriesData, productData } from "../../static/data";
+import { categoriesData} from "../../static/data";
 import { AiOutlineHeart, AiOutlineSearch, AiOutlineShoppingCart } from 'react-icons/ai';
 import { IoIosArrowDown, IoIosArrowForward } from 'react-icons/io';
 import { BiMenuAltLeft } from 'react-icons/bi';
@@ -15,11 +15,14 @@ import { backend_url } from '../../server';
 import Cart from "../Cart";
 import WishList from "../WishList";
 import { RxCross1 } from 'react-icons/rx';
+import {allProductsState} from '../../recoil/atoms/allProducts';
+import { cartState } from '../../recoil/atoms/cart';
+import { wishlistState } from '../../recoil/atoms/wishlist';
 
 
 const Header = ({ activeHeading }) => {
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(null);
   const [searchData, setSearchData] = useState(null);
   const [active, setActive] = useState(false);
   const [dropDown, setDropDown] = useState(false);
@@ -27,18 +30,27 @@ const Header = ({ activeHeading }) => {
   const [openWishList, setOpenWishList] = useState(false);
   const [open, setOpen] = useState(false);
 
+  const allProducts = useRecoilValue(allProductsState);
+  const cart = useRecoilValue(cartState);
+  const wishlist = useRecoilValue(wishlistState);
+
   const user = useRecoilValue(userState);
   const isAuthenticated = user.isAuthenticated;
 
   const handleSearchChange = (e) => {
     const term = e.target.value;
     setSearchTerm(term);
-
-    const filteredProducts = productData && productData.filter((product) =>
-      product.name.toLowerCase().includes(term.toLowerCase())
-    );
-    setSearchData(filteredProducts);
+  
+    if (term.trim() === "") {
+      setSearchData(null);
+    } else {
+      const filteredProducts = allProducts && allProducts.filter((product) =>
+        product.name.toLowerCase().includes(term.toLowerCase())
+      );
+      setSearchData(filteredProducts);
+    }
   }
+  
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,14 +87,14 @@ const Header = ({ activeHeading }) => {
               className='h-[40px] w-full px-2 border-[#ad50ff] border-[2px] rounded-md' />
             <AiOutlineSearch size={30} className='absolute right-2 top-1.5 cursor-pointer' />
             {searchData && searchData.length !== 0 && (
-              <div className="absolute min-h-[30vh] bg-slate-50 shadow-sm-2 z-[9] p-4">
+              <div className="absolute min-h-[30vh] bg-slate-50 shadow-sm-2 z-[9] p-4 w-[100%]">
                 {searchData.map((product, index) => {
                   const d = product.name;
                   const Product_name = d.replace(/\s+/g, "-");
                   return (
                     <Link to={`product/${Product_name}`} key={index}>
                       <div className="w-full flex items-start py-3">
-                        <img src={product.image_Url[0].url} alt=""
+                        <img src={`${backend_url}/${product.images[0]}`} alt=""
                           className='w-[40px] h-[40px] mr-[10px]' />
                         <h1>{product.name}</h1>
                       </div>
@@ -130,14 +142,14 @@ const Header = ({ activeHeading }) => {
               <div className="relative cursor-pointer mr-[15px]" onClick={()=> setOpenWishList(true)}>
                 <AiOutlineHeart size={30} color="rgb(255 255 255 / 83% " />
                 <span className='absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px] leading-tight text-center'>
-                  0
+                  {wishlist && wishlist.length}
                 </span>
               </div>
               <div className={`${styles.normalFlex}`}>
                 <div className="relative cursor-pointer mr-[15px]" onClick={() => setOpenCart(true)}>
                   <AiOutlineShoppingCart size={30} color="rgb(255 255 255 / 83% " />
                   <span className='absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px] leading-tight text-center'>
-                    0
+                    {cart && cart.length}
                   </span>
                 </div>
               </div>
@@ -204,7 +216,7 @@ const Header = ({ activeHeading }) => {
             >
               <AiOutlineShoppingCart size={30} />
               <span class="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px]  leading-tight text-center">
-                1
+                {cart && cart.length}
               </span>
             </div>
           </div>
@@ -223,7 +235,7 @@ const Header = ({ activeHeading }) => {
                   >
                     <AiOutlineHeart size={30} className="mt-5 ml-3" />
                     <span class="absolute right-0 top-0 rounded-full bg-[#3bc177] w-4 h-4 top right p-0 m-0 text-white font-mono text-[12px]  leading-tight text-center">
-                      0
+                      {wishlist && wishlist.length}
                     </span>
                   </div>
                 </div>
@@ -252,7 +264,7 @@ const Header = ({ activeHeading }) => {
                         <Link to={`/product/${Product_name}`}>
                           <div className="flex items-center">
                             <img
-                              src={i.image_Url[0]?.url}
+                              src={`${backend_url}/${i.images[0]}`}
                               alt=""
                               className="w-[50px] mr-2"
                             />

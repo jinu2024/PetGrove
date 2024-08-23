@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import styles from "../styles/styles";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { server } from "../server";
 import { toast } from "react-toastify";
 import { useRecoilState } from "recoil";
+import { GoogleLogin } from "react-google-login";
 import { loadingState, userState } from "../recoil/atoms/user";
+import styles from "../styles/styles";
+import { server } from "../server";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,12 +17,43 @@ const Login = () => {
   const [loading, setLoading] = useRecoilState(loadingState);
   const navigate = useNavigate();
 
+  const handleGoogleSuccess = async (response) => {
+    try {
+      setLoading(true);
+      const res = await axios.post(
+        `${server}/user/google-login`,
+        {
+          token: response.tokenId,
+        },
+        { withCredentials: true }
+      );
+
+      toast.success("Login Success!");
+
+      setUser({
+        isAuthenticated: true,
+        name: res.data.user.name,
+        email: res.data.user.email,
+        avatar: res.data.user.avatar,
+      });
+
+      navigate("/");
+    } catch (err) {
+      toast.error(err.response.data.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleFailure = (response) => {
+    toast.error("Google Sign-In failed. Please try again.");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      setLoading(true); // Set loading state to true when starting the login process
+      setLoading(true);
 
       const res = await axios.post(
         `${server}/user/login-user`,
@@ -31,7 +63,6 @@ const Login = () => {
 
       toast.success("Login Success!");
 
-      // Update Recoil state after successful login
       setUser({
         isAuthenticated: true,
         name: res.data.user.name,
@@ -39,18 +70,15 @@ const Login = () => {
         avatar: res.data.user.avatar,
       });
 
-      
-
-      // Navigate to the home page
       navigate("/");
     } catch (err) {
       toast.error(err.response.data.message);
     } finally {
-      setLoading(false); // Set loading state to false when login process finishes
+      setLoading(false);
     }
   };
-  console.log("User authenticated:", user.isAuthenticated);
 
+  console.log("User authenticated:", user.isAuthenticated);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -155,6 +183,16 @@ const Login = () => {
               <Link to="/signup" className="text-blue-600 pl-2">
                 SignUp
               </Link>
+            </div>
+            <div className="mt-4">
+              <GoogleLogin
+                clientId="714372997033-adl0o2bk28r9mplfpqokpco26fceqpli.apps.googleusercontent.com"
+                buttonText="Login with Google"
+                onSuccess={handleGoogleSuccess}
+                onFailure={handleGoogleFailure}
+                cookiePolicy={'single_host_origin'}
+                className="w-full flex justify-center"
+              />
             </div>
           </form>
         </div>

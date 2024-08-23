@@ -6,6 +6,8 @@ import { RxAvatar } from "react-icons/rx";
 import {server} from "../server";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useRecoilState } from "recoil";
+import { loadingState } from "../recoil/atoms/user";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -14,9 +16,11 @@ const SignUp = () => {
   const [visible, setVisible] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const navigate = useNavigate();
+  const [loading,setLoading] = useRecoilState(loadingState);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // Set loading state to true while submitting form
     const config = { headers: { "Content-Type": "multipart/form-data" } }
     const newForm = new FormData();
   
@@ -46,6 +50,8 @@ const SignUp = () => {
       } else {
         toast.error("An error occurred. Please try again later.");
       }
+    } finally {
+      setLoading(false); // Set loading state to false after submission
     }
   };
   

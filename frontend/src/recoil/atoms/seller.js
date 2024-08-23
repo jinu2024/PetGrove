@@ -7,6 +7,9 @@ export const sellerState = atom({
         avatar: null,
         name: '',
         email:'',
-        _id: null
+        _id: null,
+        isLoading: false,
+        description: '',
+        address: '',
     },
 });

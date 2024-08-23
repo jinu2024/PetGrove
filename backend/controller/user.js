@@ -10,6 +10,12 @@ const ErrorHandler = require("../utils/ErrorHandler");
 const sendMail = require("../utils/sendMailer");
 const sendToken = require("../utils/jwtToken");
 const {isAuthenticated}  = require("../middleware/auth");
+const { OAuth2Client } = require('google-auth-library');
+
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+
 
 
 router.post("/create-user", upload.single("file"), async (req, res, next) => {
@@ -119,6 +125,41 @@ router.post("/login-user", catchAsyncErrors(async(req,res,next)=>{
   }
 }));
 
+//Google-Login
+
+router.post('/google-login', catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return next(new ErrorHandler('Token is required', 400));
+  }
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // If user doesn't exist, create a new user
+      user = await User.create({
+        name,
+        email,
+        avatar: picture,
+        password: null, // or some default password or handling
+      });
+    }
+
+    sendToken(user, 201, res);
+  } catch (error) {
+    return next(new ErrorHandler('Google login failed, please try again later', 500));
+  }
+}));
+
 //load user
 router.get("/getuser", isAuthenticated, catchAsyncErrors(async(req,res,next)=>{
   try{
@@ -159,4 +200,163 @@ router.get(
   })
 );
 
+//user update information route
+
+router.put('/update-user-info', isAuthenticated, catchAsyncErrors(async(req, res, next)=>{
+  try{
+    const {email, password, phoneNumber, name} = req.body;
+    const user = await User.findOne({email}).select("+password");
+
+    if(!user){
+      return next(new ErrorHandler('User not found', 400));
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if(!isPasswordValid){
+      return next(
+        new ErrorHandler('Please provide the correct information', 400)
+      );
+    }
+
+    user.name = name;
+    user.email = email;
+    user.phoneNumber = phoneNumber;
+
+    await user.save();
+
+    res.status(201).json({
+      sucess: true,
+      user,
+    })
+
+  } catch(error){
+    return next(new ErrorHandler(error.message, 500))
+  }
+}))
+
+// Update user avatar
+
+router.put('/update-avatar', isAuthenticated, upload.single("image"), catchAsyncErrors(async (req, res, next) => {
+  try {
+      const userId = req.user.id;
+      const existUser = await User.findById(userId);
+
+      if (!existUser) {
+          return next(new ErrorHandler('User not found', 404));
+      }
+
+      if (existUser.avatar) {
+          const existAvatarPath = path.join(__dirname, '..', 'uploads', existUser.avatar);
+
+          if (fs.existsSync(existAvatarPath)) {
+              fs.unlinkSync(existAvatarPath);
+          }
+      }
+
+      if (!req.file) {
+          return next(new ErrorHandler('No file uploaded', 400));
+      }
+
+      const fileUrl = req.file.filename;
+
+      const user = await User.findByIdAndUpdate(userId, { avatar: fileUrl }, { new: true });
+
+      res.status(200).json({
+          success: true,
+          user,
+      });
+
+  } catch (error) {
+      return next(new ErrorHandler(error.message, 500));
+  }
+}));
+
+
+router.put("/update-user-addresses", isAuthenticated, catchAsyncErrors(async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    // Check for duplicate address type
+    const duplicateAddressType = user.addresses.find(address => address.addressType === req.body.addressType);
+
+    if (duplicateAddressType) {
+      return next(new ErrorHandler(`${req.body.addressType} address already exists`, 400));
+    }
+
+    // Find the existing address by _id
+    const existingAddress = user.addresses.find(address => address._id == req.body._id);
+    if (existingAddress) {
+      // Update the existing address
+      Object.assign(existingAddress, req.body);
+    } else {
+      // Add the new address
+      user.addresses.push(req.body);
+    }
+
+    // Save the updated user
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 500));
+  }
+}));
+
+//delete user address
+
+router.delete('/delete-user-address/:id', isAuthenticated, catchAsyncErrors(async (req, res, next)=>{
+  try{
+      const userId = req.user._id;
+      const addressId = req.params.id;
+
+      await User.updateOne({
+        _id: userId,
+      },
+    {
+      $pull: {addresses: {_id: addressId}}
+    }
+  );
+
+  const user = await User.findById(userId);
+
+  res.status(200).json({
+    success: true,
+    user,
+  })
+
+  }catch(error){
+    return next(new ErrorHandler(error.message, 500));
+  }
+}))
+
+// Update user password
+
+router.put('/update-user-password', isAuthenticated, catchAsyncErrors(async (req, res, next)=>{
+  try{
+    const user = await User.findById(req.user.id).select('+password');
+    const isPasswordCorrect = await user.comparePassword(req.body.currentPassword);
+
+    if(!isPasswordCorrect){
+      return next(new ErrorHandler("Current password is incorrect", 400))
+    }
+
+    if(req.body.newPassword !== req.body.confirmPassword){
+      return next(new ErrorHandler("Password doesn't match", 400));
+    }
+
+
+    user.password = req.body.newPassword;
+
+    await user.save();
+    res.status(200).json({
+      success: true,
+      message: 'Password Updated Succesfully',
+    })
+  }catch (error){
+    return next(new ErrorHandler(error.message, 500));
+  }
+}))
 module.exports = router;

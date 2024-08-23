@@ -10,7 +10,7 @@ const ShopCreatePage = () => {
   const isAuthenticated = seller.isAuthenticated;
   useEffect(()=>{
     if(isAuthenticated){
-      navigate(`/shop/${seller._id}`)
+      navigate(`/dashboard`)
     }
   }, [isAuthenticated])
   return (

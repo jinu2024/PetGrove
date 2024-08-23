@@ -4,8 +4,12 @@ export const userState = atom({
     key: 'userState',
     default: {
         isAuthenticated: false,
-        avatar: null,
+        avatar: '',
         name: '',
+        email: '',
+        _id: '',
+        phoneNumber: '',
+        addresses: [],
     },
 });
 
