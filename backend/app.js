@@ -14,14 +14,26 @@ const coupon = require('./controller/couponCode');
 const payment = require('./controller/payment');
 const order = require('./controller/order');
 
+if(process.env.NODE_ENV !== "PRODUCTION"){
+    require("dotenv").config({
+        path: ".env"
+    })
+}
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: process.env.SERVER,
+    origin: process.env.FRONTEND,
     credentials: true,
 }));
 app.use("/", express.static("uploads"));
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({extended: true}));
+
+
+if(process.env.NODE_ENV !== "PRODUCTION"){
+    require("dotenv").config({
+    path:"backend/config/.env"
+});
+}
 
 // Import routes
 app.use("/api/v1/user", user);
