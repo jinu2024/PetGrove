@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -8,6 +8,9 @@ import { GoogleLogin } from "react-google-login";
 import { loadingState, userState } from "../recoil/atoms/user";
 import styles from "../styles/styles";
 import { server } from "../server";
+import { gapi } from 'gapi-script';
+
+const clientId="15702441501-ja73diekukrtqkbr2jeoo70n47n4d8gn.apps.googleusercontent.com"
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -17,8 +20,19 @@ const Login = () => {
   const [loading, setLoading] = useRecoilState(loadingState);
   const navigate = useNavigate();
 
+  useEffect(()=> {
+    function start(){
+        gapi.client.init({
+          clientId:clientId,
+          scope: "",
+        })
+    }
+    gapi.load('client:auth2', start)
+  })
+
   const handleGoogleSuccess = async (response) => {
     try {
+      console.log('Success', response)
       setLoading(true);
       const res = await axios.post(
         `${server}/user/google-login`,
@@ -46,6 +60,7 @@ const Login = () => {
   };
 
   const handleGoogleFailure = (response) => {
+    console.log("Failure response", response);
     toast.error("Google Sign-In failed. Please try again.");
   };
 
@@ -186,12 +201,13 @@ const Login = () => {
             </div>
             <div className="mt-4">
               <GoogleLogin
-                clientId="714372997033-adl0o2bk28r9mplfpqokpco26fceqpli.apps.googleusercontent.com"
+                clientId="15702441501-ja73diekukrtqkbr2jeoo70n47n4d8gn.apps.googleusercontent.com"
                 buttonText="Login with Google"
                 onSuccess={handleGoogleSuccess}
                 onFailure={handleGoogleFailure}
                 cookiePolicy={'single_host_origin'}
                 className="w-full flex justify-center"
+                isSignedIn={false}
               />
             </div>
           </form>

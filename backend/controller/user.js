@@ -12,11 +12,7 @@ const sendToken = require("../utils/jwtToken");
 const {isAuthenticated}  = require("../middleware/auth");
 const { OAuth2Client } = require('google-auth-library');
 
-
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-
-
 
 router.post("/create-user", upload.single("file"), async (req, res, next) => {
   try {
@@ -120,6 +116,7 @@ router.post("/login-user", catchAsyncErrors(async(req,res,next)=>{
     }
 
     sendToken(user, 201, res);
+    console.log("User login successful!")
   } catch(error){
 
   }
@@ -127,56 +124,41 @@ router.post("/login-user", catchAsyncErrors(async(req,res,next)=>{
 
 //Google-Login
 
-router.post('/google-login', catchAsyncErrors(async (req, res, next) => {
-  const { token } = req.body;
 
-  if (!token) {
-    return next(new ErrorHandler('Token is required', 400));
-  }
-
-  try {
+router.post(
+  "/google-login",
+  catchAsyncErrors(async (req, res, next) => {
+    const { token } = req.body;
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
 
-    let user = await User.findOne({ email });
+    const { email_verified, name, email, picture } = ticket.getPayload();
 
-    if (!user) {
-      // If user doesn't exist, create a new user
-      user = await User.create({
+    if (!email_verified) {
+      return next(new ErrorHandler("Google login failed. Please try again later.", 400));
+    }
+
+    const user = await User.findOne({ email });
+
+    if (user) {
+      sendToken(user, 201, res);
+    } else {
+      const password = email + process.env.GOOGLE_SECRET;
+
+      const newUser = new User({
         name,
         email,
+        password,
         avatar: picture,
-        password: null, // or some default password or handling
       });
+
+      await newUser.save();
+      sendToken(newUser, 201, res);
     }
-
-    sendToken(user, 201, res);
-  } catch (error) {
-    return next(new ErrorHandler('Google login failed, please try again later', 500));
-  }
-}));
-
-//load user
-router.get("/getuser", isAuthenticated, catchAsyncErrors(async(req,res,next)=>{
-  try{
-    const user = await User.findById(req.user.id);
-
-    if(!user){
-      return next(new ErrorHandler("User doesn't exists", 400));
-    }
-
-    res.status(200).json({
-      success: true,
-      user,
-    });
-  }catch(error){
-    return next(new ErrorHandler(error.message, 500));
-  }
-}));
+  })
+);
 
 // LogOut User
 
