@@ -9,7 +9,7 @@ import FAQPage from "../src/pages/FAQPage";
 import ProductDetailsPage from "../src/pages/ProductDetailsPage";
 import ProfilePage from "../src/pages/ProfilePage";
 import ShopCreatePage from "../src/pages/ShopCreatePage";
-import CheckoutPage from "./pages/CheckoutPage";
+import CheckoutPage from "../src/pages/CheckOutPage";
 import OrderSuccessPage from "../src/pages/OrderSuccessPage";
 import PaymentPage from "../src/pages/PaymentPage";
 import SellerActivationPage from "../src/pages/SellerActivationPage";
