@@ -1,3 +1,3 @@
-export const server = "http://localhost:8000/api/v1";
+export const server = "https://petgrove-pdfi.onrender.com/api/v1";
 
-export const backend_url = "http://localhost:8000/";
+export const backend_url = "https://petgrove-pdfi.onrender.com/";
