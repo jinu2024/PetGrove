@@ -12,11 +12,7 @@ const sendToken = require("../utils/jwtToken");
 const {isAuthenticated}  = require("../middleware/auth");
 const { OAuth2Client } = require('google-auth-library');
 
-
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-
-
 
 router.post("/create-user", upload.single("file"), async (req, res, next) => {
   try {
@@ -72,7 +68,7 @@ const createActivationToken = (user) => {
   });
 };
 
-// Activate user
+// Activate user  
 router.post(
   "/activation",
   catchAsyncErrors(async (req, res, next) => {
@@ -120,63 +116,76 @@ router.post("/login-user", catchAsyncErrors(async(req,res,next)=>{
     }
 
     sendToken(user, 201, res);
+    console.log("User login successful!")
   } catch(error){
 
   }
 }));
 
-//Google-Login
+//Load user
 
-router.post('/google-login', catchAsyncErrors(async (req, res, next) => {
-  const { token } = req.body;
-
-  if (!token) {
-    return next(new ErrorHandler('Token is required', 400));
-  }
-
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    const { email, name, picture } = payload;
-
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      // If user doesn't exist, create a new user
-      user = await User.create({
-        name,
-        email,
-        avatar: picture,
-        password: null, // or some default password or handling
-      });
-    }
-
-    sendToken(user, 201, res);
-  } catch (error) {
-    return next(new ErrorHandler('Google login failed, please try again later', 500));
-  }
-}));
-
-//load user
-router.get("/getuser", isAuthenticated, catchAsyncErrors(async(req,res,next)=>{
+router.get('/getuser', isAuthenticated, catchAsyncErrors(async(req, res, next)=>{
   try{
     const user = await User.findById(req.user.id);
-
     if(!user){
-      return next(new ErrorHandler("User doesn't exists", 400));
+      return next(new ErrorHandler("User doesn't exist", 400));
     }
 
     res.status(200).json({
       success: true,
       user,
-    });
-  }catch(error){
-    return next(new ErrorHandler(error.message, 500));
+    })
+  } catch(error){
+      return next(new ErrorHandler(error.message, 400));
   }
-}));
+})
+)
+
+//Google-Login
+
+
+router.post(
+  "/google-login",
+  catchAsyncErrors(async (req, res, next) => {
+    try {
+      const { token } = req.body;
+      console.log("Received token:", token);
+
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+
+      const { email_verified, name, email, picture } = ticket.getPayload();
+      console.log("Google Payload:", { email_verified, name, email, picture });
+
+      if (!email_verified) {
+        return next(new ErrorHandler("Google login failed. Email not verified.", 400));
+      }
+
+      let user = await User.findOne({ email });
+      console.log("User from DB:", user);
+
+      if (!user) {
+        const password = email + process.env.GOOGLE_SECRET;
+        user = new User({
+          name,
+          email,
+          password,
+          avatar: picture,
+        });
+        await user.save();
+        console.log("New user created:", user);
+      }
+
+      sendToken(user, 201, res);
+    } catch (error) {
+      console.error("Error during Google login:", error);
+      return next(new ErrorHandler(error.message, 500));
+    }
+  })
+);
+
 
 // LogOut User
 

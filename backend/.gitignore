@@ -5,6 +5,7 @@
 /.pnp
 .pnp.js
 /.env
+config/
 
 # testing
 /coverage
@@ -22,7 +23,3 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# ignore config folder in the backend
-/backend/config
-

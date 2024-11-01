@@ -14,10 +14,15 @@ const userSchema = new mongoose.Schema({
   },
   password:{
     type: String,
-    required: [true, "Please enter your password"],
+    // required: [true, "Please enter your password"],
     minLength: [4, "Password should be greater than 4 characters"],
     select: false,
   },
+
+  googleId: { type: String },
+
+  isVerified: { type: Boolean, default: false },
+
   phoneNumber:{
     type: Number,
   },
@@ -49,7 +54,7 @@ const userSchema = new mongoose.Schema({
   },
   avatar:{
     type: String,
-    required: true,
+    // required: true,
  },
  createdAt:{
   type: Date,

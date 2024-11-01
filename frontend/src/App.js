@@ -20,6 +20,8 @@ import {
   PaymentPage,
   SellerActivationPage,
   ShopLoginPage,
+  OrderDetailsPage,
+  TrackOrderPage,
 } from "./Routes.js";
 
 import useUserAuth from "./hooks/getUser.jsx";
@@ -34,6 +36,9 @@ import {
   ShopAllEvents,
   ShopAllCoupons,
   ShopPreviewPage,
+  ShopAllOrders,
+  ShopOrderDetails,
+  ShopAllRefunds,
 } from "./ShopRoutes.js";
 import SellerProtectedRoute from "./SellerProtectedRoute";
 import Loader from "./components/Layout/Loader";
@@ -72,7 +77,7 @@ const App = () => {
               element={<SellerActivationPage />}
             />
             <Route path="/products" element={<ProductsPage />} />
-            <Route path="/product/:name" element={<ProductDetailsPage />} />
+            <Route path="/product/:id" element={<ProductDetailsPage />} />
             <Route path="/best-selling" element={<BestSellingPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/faq" element={<FAQPage />} />
@@ -84,9 +89,25 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/user/order/:id"
+              element={
+                <ProtectedRoute>
+                  <OrderDetailsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user/track/order/:id"
+              element={
+                <ProtectedRoute>
+                  <TrackOrderPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route path="/payment" element={<PaymentPage />} />
-            <Route path="/order/success/:id" element={<OrderSuccessPage />} />
+            <Route path="/order/success" element={<OrderSuccessPage />} />
             <Route path="/shop/preview/:id" element={<ShopPreviewPage />} />
             {/* Shop Routes */}
             <Route path="/shop-create" element={<ShopCreatePage />} />
@@ -124,6 +145,22 @@ const App = () => {
               }
             />
             <Route
+              path="/dashboard-refunds"
+              element={
+                <SellerProtectedRoute>
+                  <ShopAllRefunds />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
+              path="/order/:id"
+              element={
+                <SellerProtectedRoute>
+                  <ShopOrderDetails />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
               path="/dashboard-create-event"
               element={
                 <SellerProtectedRoute>
@@ -144,6 +181,14 @@ const App = () => {
               element={
                 <SellerProtectedRoute>
                   <ShopAllCoupons />
+                </SellerProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard-orders"
+              element={
+                <SellerProtectedRoute>
+                  <ShopAllOrders />
                 </SellerProtectedRoute>
               }
             />

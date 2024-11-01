@@ -12,6 +12,7 @@ router.post(
   "/create-order",
   catchAsyncErrors(async (req, res, next) => {
     const { cart, shippingAddress, user, totalPrice, paymentInfo } = req.body;
+    // group cart items by shopID
 
     const shopItemsMap = new Map();
     cart.forEach(item => {
@@ -86,7 +87,7 @@ router.put(
       order.paymentInfo.status = "Succeeded";
       const serviceCharge = order.totalPrice * 0.10;
       await updateSellerBalance(order.totalPrice - serviceCharge, order.cart[0].shopId);
-    }
+    } 
 
     await order.save({ validateBeforeSave: false });
     res.status(200).json({ success: true, order });
@@ -109,17 +110,24 @@ router.put(
 // Handle order refund request by user
 router.put(
   "/order-refund/:id",
-  isAuthenticated,
   catchAsyncErrors(async (req, res, next) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
       return next(new ErrorHandler("Order not found with this ID", 404));
-    }
-
+    } 
+ 
+    // Add refundReason
     order.status = req.body.status;
+    order.refundReason = req.body.refundReason || "No reason provided";
+
     await order.save({ validateBeforeSave: false });
-    res.status(200).json({ success: true, order, message: "Order refund request submitted successfully!" });
+
+    res.status(200).json({
+      success: true,
+      order,
+      message: "Order refund request submitted successfully!",
+    });
   })
 );
 

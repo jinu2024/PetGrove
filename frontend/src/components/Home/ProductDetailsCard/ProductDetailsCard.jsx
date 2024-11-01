@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../../hooks/cart';
 import useWishlist from '../../../hooks/wishlist'; // Import the wishlist hook
 import { toast } from 'react-toastify';
+import useGetProducts from '../../../hooks/getProducts';
 
 const ProductDetailsCard = ({ setOpen, data }) => {
     const { addToCart } = useCart();
@@ -14,6 +15,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
     const imageProduct = `${backend_url}/${data.images[0]}`;
     const imageShop = `${backend_url}/${data.shop.avatar}`;
     const [count, setCount] = useState(1);
+    const {products} = useGetProducts(data.shopId);
 
     // Check if item is already in wishlist
     const isInWishlist = wishlist.some((item) => item._id === data._id);
@@ -50,6 +52,10 @@ const ProductDetailsCard = ({ setOpen, data }) => {
             toast.success('Added to wishlist');
         }
     };
+    const totalReviewsLength = products && products.reduce((acc, product) => acc + product.reviews.length, 0);
+    const totalRatings = products && products.reduce((acc, product) => acc + product.reviews.reduce((sum, review) => sum + review.rating, 0 ), 0)
+    const averageRating = totalRatings / totalReviewsLength || 0;
+
 
     return (
         <div className='bg-[#070505]'>
@@ -66,7 +72,7 @@ const ProductDetailsCard = ({ setOpen, data }) => {
                                         <div>
                                             <h3 className={`${styles.shop_name}`}>{data.shop.name}</h3>
                                             <h5 className='pb-3 text-[15px]'>
-                                                ({data.shop.sold_out}) Ratings
+                                                ({averageRating}) Ratings
                                             </h5>
                                         </div>
                                     </Link>

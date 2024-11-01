@@ -7,17 +7,18 @@ import { server } from "../../server";
 import { toast } from "react-toastify";
 import { RxCross1 } from "react-icons/rx";
 import { userState } from "../../recoil/atoms/user";
-import { useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { UserOrderState } from "../../recoil/atoms/userorder";
 
 const Payment = () => {
-  const [orderData, setOrderData] = useState([]);
+  const [allOrders, setAllOrders] = useRecoilState(UserOrderState);
   const [open, setOpen] = useState(false);
   const user = useRecoilValue(userState);
   const navigate = useNavigate();
 
   useEffect(() => {
     const orderData = JSON.parse(localStorage.getItem("latestOrder"));
-    setOrderData(orderData);
+    setAllOrders(orderData);
   }, []);
 
   const createOrder = (data, actions) => {
@@ -28,7 +29,7 @@ const Payment = () => {
             description: "PetGrove",
             amount: {
               currency_code: "INR",
-              value: orderData?.totalPrice,
+              value: allOrders?.totalPrice,
             },
           },
         ],
@@ -42,10 +43,10 @@ const Payment = () => {
   };
 
   const order = {
-    cart: orderData?.cart,
-    shippingAddress: orderData?.shippingAddress,
+    cart: allOrders?.cart,
+    shippingAddress: allOrders?.shippingAddress,
     user: user && user,
-    totalPrice: orderData?.totalPrice,
+    totalPrice: allOrders?.totalPrice,
   };
 
   const onApprove = async (data, actions) => {
@@ -93,7 +94,7 @@ const Payment = () => {
         },
       };
 
-      const { data } = await axios.post(`${server}/payment/razorpay`, { amount: orderData?.totalPrice * 100 }, config);
+      const { data } = await axios.post(`${server}/payment/razorpay`, { amount: allOrders?.totalPrice * 100 }, config);
 
       const options = {
         key: "rzp_test_GZYttaX8zCwIRN", // Enter your Razorpay key here
@@ -182,7 +183,7 @@ const Payment = () => {
           />
         </div>
         <div className="w-full 800px:w-[35%] 800px:mt-0 mt-8">
-          <CartData orderData={orderData} />
+          <CartData orderData={allOrders} />
         </div>
       </div>
     </div>

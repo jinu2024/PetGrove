@@ -3,22 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AiFillHeart, AiOutlineHeart, AiOutlineMessage, AiOutlineShoppingCart } from 'react-icons/ai';
 import styles from '../../styles/styles';
 import { backend_url } from '../../server';
-import { useRecoilValue } from 'recoil';
-import { sellerState } from '../../recoil/atoms/seller';
 import Loader from '../Layout/Loader';
 import useGetProducts from '../../hooks/getProducts';
 import { useCart } from '../../hooks/cart';
 import useWishlist from '../../hooks/wishlist';
 import { toast } from 'react-toastify';
+import Ratings from './Ratings';
+
 
 const ProductDetails = ({ data }) => {
     const [count, setCount] = useState(1);
     const [click, setClick] = useState(false); // For wishlist
     const [select, setSelect] = useState(0);
-
+    
     const navigate = useNavigate();
     const { addToCart } = useCart(); 
     const { wishlist, addToWishlist, removeFromWishlist } = useWishlist(); 
+    const {products} = useGetProducts(data.shopId);
 
     // Check if item is already in wishlist
     const isInWishlist = wishlist.some((item) => item._id === data._id);
@@ -45,6 +46,10 @@ const ProductDetails = ({ data }) => {
         }
         setClick(!click);
     };
+
+    const totalReviewsLength = products && products.reduce((acc, product) => acc + product.reviews.length, 0);
+    const totalRatings = products && products.reduce((acc, product) => acc + product.reviews.reduce((sum, review) => sum + review.rating, 0 ), 0)
+    const averageRating = totalRatings / totalReviewsLength || 0;
 
     return (
         <div className='bg-white'>
@@ -95,7 +100,7 @@ const ProductDetails = ({ data }) => {
                                     <img src={`${backend_url}/${data.shop.avatar}`} alt="" className='w-[50px] h-[50px] rounded-full mr-2' />
                                     <div className='pr-8'>
                                         <h3 className={`${styles.shop_name} pb-1 pt-1}`}>{data.shop.name}</h3>
-                                        <h5 className='pb-3 text-[15px]'>({data.shop.ratings}) Ratings</h5>
+                                        <h5 className='pb-3 text-[15px]'>({averageRating}/5) Ratings</h5>
                                     </div>
                                     <div className={`${styles.button} bg-[#2e07ad] mt-4 !rounded !h-11`} onClick={handleMessageSubmit}>
                                         <span className='text-white flex items-center'>Send Message <AiOutlineMessage className='ml-1' /></span>
@@ -104,7 +109,7 @@ const ProductDetails = ({ data }) => {
                             </div>
                         </div>
                     </div>
-                    <ProductDetailsInfo data={data} />
+                    <ProductDetailsInfo data={data} totalReviewsLength={totalReviewsLength} products= {products} averageRating= {averageRating}/>
                     <br />
                     <br />
                 </div>
@@ -113,10 +118,9 @@ const ProductDetails = ({ data }) => {
     );
 };
 
-const ProductDetailsInfo = ({ data }) => {
+const ProductDetailsInfo = ({ data, totalReviewsLength , products, averageRating}) => {
     const [active, setActive] = useState(1);
-    const {_id} = useRecoilValue(sellerState);
-    const {products} = useGetProducts(_id);
+   
     return (
         <div className='bg-[#f5f6fb] px-3 800px:px-10 py-2 rounded'>
             <div className="w-full flex justify-between border-b pt-10 pb-2">
@@ -133,16 +137,36 @@ const ProductDetailsInfo = ({ data }) => {
                     {active === 3 && <div className={`${styles.active_indicator}`}></div>}
                 </div>
             </div>
-            {active === 1 && (
+            {active === 1 ? (
                 <>
                     <p className=' text-[12px] py-2 800px:text-[18px] leading-8 pb-10 whitespace-pre-line'>{data.description}</p>
                 </>
-            )}
-            {active === 2 && (
-                <div className='w-full justify-center min-h-[40vh] flex items-center'>
-                    <p>No Reviews yet!</p>
+            ) : (null)}
+            {active === 2 ? (
+                <div className='w-full py-3 min-h-[40vh] flex flex-col items-center overflow-y-scroll'>
+                   {
+                    data && data.reviews.map((item, index)=>(
+                        <div className="w-full flex my-2">
+                            <img src={`${backend_url}/${item.user.avatar}`} alt="" className='w-[50px] h-[50px] rounded-full' />
+                            <div className='pl-2'>
+                            <div className="w-full flex items-center">
+                                <h1 className='font-[500] mr-3'>{item.user.name}</h1>
+                                <Ratings rating={item?.rating}/>
+                            </div>
+                            <p>{item.comment}</p>
+                            </div>
+                        </div>
+                    ))
+                   }
+                   <div className="w-full flex justify-center">
+                   {
+                    data && data.reviews.length === 0 &&(
+                        <h5>No Reviews yet!!</h5>
+                    )
+                   }
+                   </div>
                 </div>
-            )}
+            ):(null)}
             {active === 3 && (
                 <div className='w-full block 800px:flex p-5'>
                     <div className='w-full 800px:w-[50%]'>
@@ -150,7 +174,7 @@ const ProductDetailsInfo = ({ data }) => {
                             <img src={`${backend_url}/${data.shop.avatar}`} alt="" className='w-[50px] h-[50px] rounded-full' />
                             <div className='pl-3'>
                                 <h3 className={`${styles.shop_name}`}>{data.shop.name}</h3>
-                                <h5 className='pb-2  text-[12px] 800px:text-[15px]'>({data.shop.ratings}) Ratings</h5>
+                                <h5 className='pb-2  text-[12px] 800px:text-[15px]'>({averageRating}/5) Ratings</h5>
                             </div>
                         </div>
                         <p className="pt-2 text-[12px] 800px:text-[15px]">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Voluptatibus maiores magnam reiciendis! Tempore, velit nostrum minima molestias consequuntur a facilis error eligendi sapiente delectus maxime explicabo ut autem eius in!</p>
@@ -159,7 +183,7 @@ const ProductDetailsInfo = ({ data }) => {
                         <div className="text-left">
                             <h5 className="font-[600] text-[12px] 800px:text-[15px]">Joined on: <span className='font-[500]'>{data.shop?.createdAt?.slice(0,10)}</span></h5>
                             <h5 className="font-[600] pt-3 text-[12px] 800px:text-[15px]">Total Products: <span className='font-[500]'>{products.length}</span></h5>
-                            <h5 className="font-[600] pt-3 text-[12px] 800px:text-[15px]">Total Reviews: <span className='font-[500]'>50</span></h5>
+                            <h5 className="font-[600] pt-3 text-[12px] 800px:text-[15px]">Total Reviews: <span className='font-[500]'>{totalReviewsLength}</span></h5>
                             <Link to={`/shop/preview/${data.shopId}`}>
                                 <div className={`${styles.button} !rounded-[4px] !h-[39.5px] mt-3`}>
                                     <h4 className='text-white'>Visit Shop</h4>

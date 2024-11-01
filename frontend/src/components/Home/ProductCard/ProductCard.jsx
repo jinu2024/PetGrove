@@ -4,12 +4,16 @@ import styles from '../../../styles/styles';
 import { AiFillHeart, AiFillStar, AiOutlineEye, AiOutlineHeart, AiOutlineShoppingCart, AiOutlineStar } from 'react-icons/ai';
 import ProductDetailsCard from '../ProductDetailsCard/ProductDetailsCard';
 import { backend_url } from '../../../server';
-import useWishlist from '../../../hooks/wishlist'; // Import the useWishlist hook
+import useWishlist from '../../../hooks/wishlist';
+import { useCart } from '../../../hooks/cart';
+import { toast } from 'react-toastify';
+import Ratings from '../../Products/Ratings';
 
 const ProductCard = ({ data }) => {
     const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
     const [click, setClick] = useState(false);
     const [open, setOpen] = useState(false);
+    const { addToCart } = useCart();
 
     // Check if item is in wishlist
     useEffect(() => {
@@ -21,7 +25,6 @@ const ProductCard = ({ data }) => {
         return null;
     }
 
-    const productName = data.name.replace(/\s+/g, '-');
     const imageProduct = `${backend_url}/${data.images[0]}`;
 
     const handleWishlistClick = () => {
@@ -33,24 +36,30 @@ const ProductCard = ({ data }) => {
         setClick(!click);
     };
 
+    const addToCartHandler = () => {
+        if (data.stock < 1) {
+            toast.error('Product stock is limited!');
+        } else {
+            const productWithQuantity = { ...data, quantity: 1 };
+            addToCart(productWithQuantity);
+        }
+    };
+
     return (
         <>
             <div className='w-full h-[370px] bg-white rounded-lg shadow-sm p-3 relative cursor-pointer'>
-                <Link to={`/product/${productName}`}>
+                <Link to={`/product/${data._id}`}>
                     <img src={imageProduct} alt={data.name} className='w-full h-[170px] object-contain' />
                 </Link>
                 <Link to={`/shop/preview/${data.shopId}`}>
                     <h5 className={`${styles.shop_name}`}>{data.shop.name}</h5>
                 </Link>
-                <Link to={`/product/${productName}`}>
+                <Link to={`/product/${data._id}`}>
                     <h4 className='pb-3 font-[500]'>
                         {data.name.length > 40 ? `${data.name.slice(0, 40)}...` : data.name}
                     </h4>
                     <div className="flex">
-                        {[...Array(5)].map((_, index) => (
-                            <AiFillStar key={index} className='mr-2 cursor-pointer' color='#F6BA00' size={20} />
-                        ))}
-                        <AiOutlineStar className='mr-2 cursor-pointer' color='#F6BA00' size={20} />
+                        <Ratings rating = {data?.ratings}/>
                     </div>
                     <div className='py-2 flex items-center justify-between'>
                         <div className='flex'>
@@ -97,7 +106,7 @@ const ProductCard = ({ data }) => {
                     <AiOutlineShoppingCart
                         size={22}
                         className='cursor-pointer absolute right-2 top-24'
-                        onClick={() => setOpen(!open)}
+                        onClick={addToCartHandler}
                         color='#444'
                         title='Add to cart'
                     />

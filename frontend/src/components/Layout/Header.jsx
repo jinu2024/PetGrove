@@ -11,6 +11,7 @@ import NavBar from './NavBar';
 import { CgProfile } from 'react-icons/cg'
 import { useRecoilValue } from 'recoil';
 import { userState } from '../../recoil/atoms/user';
+import { sellerState } from '../../recoil/atoms/seller';
 import { backend_url } from '../../server';
 import Cart from "../Cart";
 import WishList from "../WishList";
@@ -36,16 +37,19 @@ const Header = ({ activeHeading }) => {
 
   const user = useRecoilValue(userState);
   const isAuthenticated = user.isAuthenticated;
+  
+  const selller = useRecoilValue(sellerState);
+  const sellerIsAuthenticated = user.isAuthenticated;
 
   const handleSearchChange = (e) => {
-    const term = e.target.value;
+    const term = e.target.value.toLowerCase();
     setSearchTerm(term);
   
     if (term.trim() === "") {
       setSearchData(null);
     } else {
       const filteredProducts = allProducts && allProducts.filter((product) =>
-        product.name.toLowerCase().includes(term.toLowerCase())
+        product.name.toLowerCase().includes(term)
       );
       setSearchData(filteredProducts);
     }
@@ -89,10 +93,8 @@ const Header = ({ activeHeading }) => {
             {searchData && searchData.length !== 0 && (
               <div className="absolute min-h-[30vh] bg-slate-50 shadow-sm-2 z-[9] p-4 w-[100%]">
                 {searchData.map((product, index) => {
-                  const d = product.name;
-                  const Product_name = d.replace(/\s+/g, "-");
                   return (
-                    <Link to={`product/${Product_name}`} key={index}>
+                    <Link to={`product/${product._id}`} key={index}>
                       <div className="w-full flex items-start py-3">
                         <img src={`${backend_url}/${product.images[0]}`} alt=""
                           className='w-[40px] h-[40px] mr-[10px]' />
@@ -107,7 +109,7 @@ const Header = ({ activeHeading }) => {
           <div className={`${styles.button}`}>
             <Link to="/shop-create">
               <h1 className='text-[#fff] flex items-center'>
-                Become Seller <IoIosArrowForward className="ml-1" />
+                {sellerIsAuthenticated ? "Dashboard" : "Become Seller"} <IoIosArrowForward className="ml-1" />
               </h1>
             </Link>
           </div>
@@ -256,19 +258,16 @@ const Header = ({ activeHeading }) => {
                 />
                 {searchData && (
                   <div className="absolute bg-[#fff] z-10 shadow w-full left-0 p-3">
-                    {searchData.map((i) => {
-                      const d = i.name;
-
-                      const Product_name = d.replace(/\s+/g, "-");
+                    {searchData.map((product) => {
                       return (
-                        <Link to={`/product/${Product_name}`}>
+                        <Link to={`/product/${product._id}`}>
                           <div className="flex items-center">
                             <img
-                              src={`${backend_url}/${i.images[0]}`}
+                              src={`${backend_url}/${product.images[0]}`}
                               alt=""
                               className="w-[50px] mr-2"
                             />
-                            <h5>{i.name}</h5>
+                            <h5>{product.name}</h5>
                           </div>
                         </Link>
                       );
