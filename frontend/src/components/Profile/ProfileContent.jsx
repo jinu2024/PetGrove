@@ -7,7 +7,7 @@ import styles from '../../styles/styles';
 import { DataGrid } from '@material-ui/data-grid';
 import { Link } from 'react-router-dom';
 import { Button } from '@material-ui/core';
-import { MdOutlineTrackChanges } from 'react-icons/md';
+import { MdOutlineTrackChanges, MdTrackChanges } from 'react-icons/md';
 import useUpdateUserInfo from '../../hooks/updateUserInfo';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -15,6 +15,9 @@ import { RxCross1 } from 'react-icons/rx';
 import { Country, State, City } from 'country-state-city';
 import useUpdateAddress from '../../hooks/updateUserAddress';
 import useDeleteAddress from '../../hooks/User/deleteUserAddress';
+import useGetAllOrders from '../../hooks/User/getAllOrders';
+import Loader from "../../components/Layout/Loader";
+import { FaArrowRight } from 'react-icons/fa';
 
 
 const ProfileContent = ({ active }) => {
@@ -156,250 +159,198 @@ const ProfileContent = ({ active }) => {
     );
 }
 
+
+
+
 const AllOrders = () => {
-    const orders = [
-        {
-            _id: "76871gdubjabjka832988cbsda",
-            orderItems: [
-                {
-                    name: "Pedigree Puppy Food | Dry & Wet Starter - Dog Puppies",
-                },
-            ],
-            totalPrice: 40,
-            orderStatus: "Processing",
-        },
-    ];
-    const columns = [
-        { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
+  const { allOrders, loading } = useGetAllOrders();
 
-        {
-            field: "status",
-            headerName: "Status",
-            minWidth: 130,
-            flex: 0.7,
-            cellClassName: (params) => {
-                return params.getValue(params.id, "status") === "Delivered"
-                    ? "greenColor"
-                    : "redColor";
-            },
-        },
-        {
-            field: "itemsQty",
-            headerName: "Items Qty",
-            type: "number",
-            minWidth: 130,
-            flex: 0.7,
-        },
+  if (loading) {
+    return <><Loader/></>;
+  }
 
-        {
-            field: "total",
-            headerName: "Total",
-            type: "number",
-            minWidth: 130,
-            flex: 0.8,
-        },
+  return (
+    <div className="pl-4 pt-1 space-y-4">
+      {allOrders.map((order) => (
+        <div
+          key={order._id}
+          className="bg-white p-2 border border-gray-200 rounded-md shadow-sm flex items-center justify-between overflow-hidden"
+        >
+          {/* Cart Items */}
+          <div className="flex items-center space-x-4">
+            {order.cart.slice(0, 1).map((item, index) => ( // Show only first item
+              <div key={index} className="flex items-center">
+                <img
+                  src={`${backend_url}/${item.images[0]}`}
+                  alt={item.name}
+                  className="w-16 h-16 object-cover rounded-md cursor-pointer"
+                />
+                <div className="ml-2">
+                  {/* Slice product name for mobile view */}
+                  <p className="text-sm font-medium truncate max-w-[80px] sm:max-w-none sm:whitespace-normal">
+                    {window.innerWidth < 640 ? `${item.name.slice(0, 10)}...` : item.name}
+                  </p>
+                  <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
-        {
-            field: " ",
-            flex: 1,
-            minWidth: 150,
-            headerName: "",
-            type: "number",
-            sortable: false,
-            renderCell: (params) => {
-                return (
-                    <>
-                        <Link to={`/user/order/${params.id}`}>
-                            <Button>
-                                <AiOutlineArrowRight size={20} />
-                            </Button>
-                        </Link>
-                    </>
-                );
-            },
-        },
-    ];
-    const row = [];
+          {/* Order Summary */}
+          <div className="ml-auto flex flex-col items-end space-y-1">
+            {/* Truncated Order ID */}
+            <h3 className="text-sm font-semibold">
+              Order: #{order._id.slice(0, 8)}...{/* Slice off part of Order ID */}
+            </h3>
+            <p className={`text-xs ${order.status === 'Delivered' ? 'text-green-500' : 'text-orange-500'}`}>
+              {order.status}
+            </p>
+            <p className="text-xs text-gray-600">Total: US$ {order.totalPrice}</p>
 
-    orders && orders.forEach((item) => {
-        row.push({
-            id: item._id,
-            itemsQty: item.orderItems.length,
-            total: "US$ " + item.totalPrice,
-            status: item.orderStatus,
-        });
-    });
-
-    return (
-        <div className="pl-8 pt-1">
-            <DataGrid rows={row} columns={columns} pageSize={10} disableSelectionOnClick autoHeight />
+            {/* Action Arrow Icon */}
+            <Link to={`/user/order/${order._id}`} className="mt-1">
+              <FaArrowRight className="text-blue-500 text-lg" />
+            </Link>
+          </div>
         </div>
-    )
-}
+      ))}
+    </div>
+  );
+};
+
 
 const AllRefundOrders = () => {
-    const orders = [
-        {
-            _id: "76871gdubjabjka832988cbsda",
-            orderItems: [
-                {
-                    name: "Pedigree Puppy Food | Dry & Wet Starter - Dog Puppies",
-                },
-            ],
-            totalPrice: 40,
-            orderStatus: "Processing",
-        },
-    ];
+    const { allOrders, loading } = useGetAllOrders();
 
-    const columns = [
-        { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
+    // Filter refund orders where the status is "Processing refund"
+    const refundOrders = allOrders?.filter((item) => item.status === "Processing refund") || [];
 
-        {
-            field: "status",
-            headerName: "Status",
-            minWidth: 130,
-            flex: 0.7,
-            cellClassName: (params) => {
-                return params.getValue(params.id, "status") === "Delivered"
-                    ? "greenColor"
-                    : "redColor";
-            },
-        },
-        {
-            field: "itemsQty",
-            headerName: "Items Qty",
-            type: "number",
-            minWidth: 130,
-            flex: 0.7,
-        },
-
-        {
-            field: "total",
-            headerName: "Total",
-            type: "number",
-            minWidth: 130,
-            flex: 0.8,
-        },
-
-        {
-            field: " ",
-            flex: 1,
-            minWidth: 150,
-            headerName: "",
-            type: "number",
-            sortable: false,
-            renderCell: (params) => {
-                return (
-                    <>
-                        <Link to={`/user/order/${params.id}`}>
-                            <Button>
-                                <AiOutlineArrowRight size={20} />
-                            </Button>
-                        </Link>
-                    </>
-                );
-            },
-        },
-    ];
-    const row = [];
-
-    orders && orders.forEach((item) => {
-        row.push({
-            id: item._id,
-            itemsQty: item.orderItems.length,
-            total: "US$ " + item.totalPrice,
-            status: item.orderStatus,
-        });
-    });
+    if (loading) {
+        return <Loader />;
+    }
 
     return (
         <div className="pl-8 pt-1">
-            <DataGrid rows={row} columns={columns} pageSize={10} disableSelectionOnClick autoHeight />
+            {refundOrders.length === 0 ? (
+                <p className="text-gray-600">No refund orders found.</p>
+            ) : (
+                refundOrders.map((order) => (
+                    <div
+                        key={order._id}
+                        className="flex items-center justify-between bg-white p-4 border border-gray-200 rounded-md shadow-sm mb-4"
+                    >
+                        {/* Order Summary Section */}
+                        <div className="flex flex-col sm:flex-row sm:items-center">
+                            {/* Order ID */}
+                            <div className="mr-6">
+                                <h3 className="text-base font-semibold">
+                                    Order: {order._id.slice(0, 10)}...
+                                </h3>
+                                <p className={`text-sm ${order.status === 'Refund Successfully' ? 'text-green-500' : 'text-orange-500'}`}>
+                                    {order.status}
+                                </p>
+                            </div>
+                            {/* Product Details */}
+                            <div className="flex items-center">
+                                {order.cart && order.cart.length > 0 ? (
+                                    <>
+                                        {/* Product Image */}
+                                        <img 
+                                            src={`${backend_url}/${order.cart[0].images[0]}`} // Ensure images is available
+                                            alt={order.cart[0].name} 
+                                            className="w-16 h-16 object-cover rounded mr-4" 
+                                        />
+                                        {/* Product Name */}
+                                        <p className="text-sm text-gray-600">
+                                            {order.cart[0].name.length > 15
+                                                ? `${order.cart[0].name.slice(0, 15)}...`
+                                                : order.cart[0].name}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-gray-600">No items found</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Total Price */}
+                        <div className="text-sm text-gray-700">
+                            Total: US$ {order.totalPrice}
+                        </div>
+
+                        {/* Action Button */}
+                        <div>
+                            <Link to={`/user/order/${order._id}`}>
+                                <AiOutlineArrowRight size={24} className="text-blue-500 hover:text-blue-600 cursor-pointer" />
+                            </Link>
+                        </div>
+                    </div>
+                ))
+            )}
         </div>
-    )
-}
+    );
+};
 
 const TrackOrder = () => {
-    const orders = [
-        {
-            _id: "76871gdubjabjka832988cbsda",
-            orderItems: [
-                {
-                    name: "Pedigree Puppy Food | Dry & Wet Starter - Dog Puppies",
-                },
-            ],
-            totalPrice: 40,
-            orderStatus: "Processing",
-        },
-    ];
+    const { allOrders, loading } = useGetAllOrders();
 
-    const columns = [
-        { field: "id", headerName: "Order ID", minWidth: 150, flex: 0.7 },
-
-        {
-            field: "status",
-            headerName: "Status",
-            minWidth: 130,
-            flex: 0.7,
-            cellClassName: (params) => {
-                return params.getValue(params.id, "status") === "Delivered"
-                    ? "greenColor"
-                    : "redColor";
-            },
-        },
-        {
-            field: "itemsQty",
-            headerName: "Items Qty",
-            type: "number",
-            minWidth: 130,
-            flex: 0.7,
-        },
-
-        {
-            field: "total",
-            headerName: "Total",
-            type: "number",
-            minWidth: 130,
-            flex: 0.8,
-        },
-
-        {
-            field: " ",
-            flex: 1,
-            minWidth: 150,
-            headerName: "",
-            type: "number",
-            sortable: false,
-            renderCell: (params) => {
-                return (
-                    <>
-                        <Link to={`/user/order/${params.id}`}>
-                            <Button>
-                                <MdOutlineTrackChanges size={20} />
-                            </Button>
-                        </Link>
-                    </>
-                );
-            },
-        },
-    ];
-    const row = [];
-
-    orders && orders.forEach((item) => {
-        row.push({
-            id: item._id,
-            itemsQty: item.orderItems.length,
-            total: "US$ " + item.totalPrice,
-            status: item.orderStatus,
-        });
-    });
+    if (loading) {
+        return <Loader />;
+    }
 
     return (
         <div className="pl-8 pt-1">
-            <DataGrid rows={row} columns={columns} pageSize={10} disableSelectionOnClick autoHeight />
+            {allOrders?.length === 0 ? (
+                <p className="text-gray-600">No orders found.</p>
+            ) : (
+                allOrders.map((order) => (
+                    <div
+                        key={order._id}
+                        className="flex items-center justify-between bg-white p-4 border border-gray-200 rounded-md shadow-sm mb-4"
+                    >
+                        {/* Order Summary Section */}
+                        <div className="flex flex-col sm:flex-row sm:items-center w-full">
+                            {/* Order ID and Status */}
+                            <div className="flex-1 mr-6">
+                                <h3 className="text-base font-semibold">
+                                    Order: {order._id.slice(0, 10)}...
+                                </h3>
+                                <p className={`text-sm ${order.status === 'Delivered' ? 'text-green-500' : 'text-orange-500'}`}>
+                                    {order.status}
+                                </p>
+                            </div>
+
+                            {/* Product Details */}
+                            <div className="flex-1 mr-6">
+                                {order?.cart && order.cart.length > 0 ? (
+                                    <p className="text-sm text-gray-600">
+                                        {order?.cart[0].name.length > 15
+                                            ? `${order?.cart[0].name.slice(0, 15)}...`
+                                            : order?.cart[0].name}
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-gray-600">No items found</p>
+                                )}
+                            </div>
+
+                            {/* Total Price */}
+                            <div className="flex-1 text-sm text-gray-700 text-center">
+                                Total: US$ {order.totalPrice}
+                            </div>
+
+                            {/* Action Button */}
+                            <div className="flex-none">
+                                <Link to={`/user/track/order/${order._id}`} className="flex justify-end">
+                                    <MdTrackChanges size={24} className="text-blue-500 hover:text-blue-600 cursor-pointer" />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            )}
         </div>
-    )
-}
+    );
+};
 
 const ChangePassword = () => {
     const [currentPassword, setCurrentPassword] = useState("");

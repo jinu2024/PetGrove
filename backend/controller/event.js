@@ -60,7 +60,7 @@ router.get('/get-all-events/:id', catchAsyncErrors(async(req,res,next)=>{
 }));
 
 
-// Get all events
+// Get all events 
 
 router.get('/get-all-events', async(req, res, next)=>{
   try{

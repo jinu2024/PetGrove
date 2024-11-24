@@ -10,18 +10,26 @@ exports.isAuthenticated = catchAsyncErrors(async (req, res, next) => {
   if (!token) {
     return next(new ErrorHandler("Please login to continue", 401));
   }
-  const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-  req.user = await User.findById(decoded.id);
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    req.user = await User.findById(decoded.id);
 
-  next();
+    if (!req.user) {
+      return next(new ErrorHandler("User not found", 401));
+    }
+
+    next();
+  } catch (error) {
+    return next(new ErrorHandler("Invalid token", 401));
+  }
 });
 
 exports.isSeller = catchAsyncErrors(async (req, res, next) => {
   const { seller_token } = req.cookies;
 
   if (!seller_token) {
-    return next(new ErrorHandler('Please login to continue', 401));
+    return next(new ErrorHandler("Please login to continue", 401));
   }
 
   try {
@@ -29,13 +37,12 @@ exports.isSeller = catchAsyncErrors(async (req, res, next) => {
     const seller = await Shop.findById(decoded.id);
 
     if (!seller) {
-      return next(new ErrorHandler('Seller not found', 401));
+      return next(new ErrorHandler("Seller not found", 401));
     }
 
     req.seller = seller;
     next();
   } catch (error) {
-    return next(new ErrorHandler('Invalid token', 401));
+    return next(new ErrorHandler("Invalid token", 401));
   }
 });
-
